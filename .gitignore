@@ -5,3 +5,8 @@ tools/models/
 _backup/
 .claude/
 .DS_Store
+
+# Issue 1 print files that live in the same folder (not part of the site)
+*.pdf
+*.indd
+*.idml
