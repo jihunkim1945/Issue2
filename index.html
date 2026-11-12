@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WATCHMAN — Issue 02 / Surveillance</title>
+  <meta name="description" content="WATCHMAN Issue 02 — Surveillance. Can surveillance be just?">
+
+  <!-- FONTS
+       Courier Prime  = typewriter / metadata (continuity with Issue 01)
+       Reenie Beanie  = investigator handwriting
+       To work fully offline, download the .woff2 files into /assets/fonts
+       and replace this <link> with @font-face rules in style.css. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Reenie+Beanie&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-stage="film">
+
+  <!-- ============================================================
+       GLOBAL TEXTURE LAYERS (grain / scanlines / copier streak)
+       ============================================================ -->
+  <canvas class="fx fx-grain" id="fx-grain" aria-hidden="true"></canvas>
+  <div class="fx fx-scan" aria-hidden="true"></div>
+  <div class="fx fx-streak" aria-hidden="true"></div>   <!-- the vertical photocopy streak from Issue 01, now a signal fault -->
+  <div class="fx fx-flash" id="fx-flash" aria-hidden="true"></div>
+
+
+  <!-- ============================================================
+       SYSTEM BAR
+       ============================================================ -->
+  <header class="sys-bar">
+    <span class="sys-logo">WATCHMAN <i>/ ISSUE 02 — SURVEILLANCE</i></span>
+    <span class="sys-stage">ACCESS <b id="sys-num">01</b>/<span id="sys-total">11</span> — <span id="sys-title">ENTRY</span></span>
+    <ol class="sys-ticks" id="sys-ticks" aria-label="Archive levels"></ol>
+    <button class="sys-sound" id="sound-toggle" type="button" aria-pressed="true">SOUND: ON</button>
+  </header>
+
+
+  <main id="archive">
+
+    <!-- ==========================================================
+         01 — FILM OPENING
+         The detective follows Camera 04 into Sublevel 2.
+         Shots (images, camera moves, subtitles) are listed in SHOTS in script.js.
+         Images: assets/images/issue01 (Issue 01 pages) + assets/images/film (shot04…shot08)
+         ========================================================== -->
+    <section class="stage stage-film" id="film" aria-label="Opening film">
+      <div class="film-frame" id="film-frame"></div>
+      <div class="film-bar film-bar--top">
+        <span id="film-count">SHOT 01</span>
+        <span class="film-hint">CLICK / → NEXT SHOT</span>
+        <button class="film-skip" id="film-skip" type="button">SKIP ↠</button>
+      </div>
+      <div class="film-bar film-bar--bottom"><p class="film-sub" id="film-sub" aria-live="polite"></p></div>
+      <div class="film-cut" id="film-cut"></div>
+    </section>
+
+
+    <!-- ==========================================================
+         00 — THE DESK (opening)
+         Every page of Issue 01 drops onto the desk, fast. The last one is
+         OPEN QUESTIONS: the pen circles "Who disabled Camera 04?" and we go into it.
+         Pages / order / timing → DESK in script.js
+         Papers → DESK_PAPERS in script.js
+         ========================================================== -->
+    <section class="stage stage-desk" id="desk" aria-label="Case file 001 on the desk">
+      <div class="desk-surface" id="desk-surface">
+        <!-- the light: your cursor is a flashlight (styles: .desk-lamp in style.css, movement: DESK stage in script.js) -->
+        <div class="desk-lamp" id="desk-lamp" aria-hidden="true"></div>
+      </div>
+      <p class="desk-hint" id="desk-hint">CASE FILE 001</p>
+      <!-- one page opened large (click a page on the board) -->
+      <div class="desk-view" id="desk-view" role="dialog" aria-label="Issue 01 page" hidden>
+        <div class="desk-view-page" id="desk-view-page">
+          <img id="desk-view-img" alt="">
+          <!-- on the clue spread only: the pen circle — click it to go into the CCTV room -->
+          <button type="button" class="desk-view-circle" id="desk-view-circle" aria-label="Who disabled Camera 04? — follow it" hidden><img src="assets/images/desk/pen-circle.png" alt=""></button>
+        </div>
+        <p class="desk-view-bar"><button type="button" class="btn" id="desk-view-prev">← PREV</button>
+          <span id="desk-view-num">PAGE 01 / 23</span>
+          <button type="button" class="btn" id="desk-view-next">NEXT →</button>
+          <button type="button" class="btn" id="desk-view-close">CLOSE [ESC]</button></p>
+      </div>
+    </section>
+
+
+    <!-- ==========================================================
+         02 — CCTV GRID (the wall of feeds)
+         Tiles are built in script.js → buildWall()
+         Camera list → CAMS in script.js
+         ========================================================== -->
+    <section class="stage stage-wall" id="wall" aria-label="CCTV grid">
+      <div class="wall-room" id="wall-room">
+        <!-- REPLACE WITH CCTV FOOTAGE: each tile reads cam.src (image or video) if set in CAMS -->
+        <div class="wall" id="wall-grid"></div>
+      </div>
+      <div class="wall-white" aria-hidden="true"></div>   <!-- white-out when arriving from the film -->
+      <!-- the search gets harder: black boxes + pop-ups that get in the way (Encroach in script.js) -->
+      <div class="blackout" id="blackout" aria-hidden="true"></div>
+      <div class="tempt" id="tempt"></div>
+
+      <div class="wall-hud">
+        <p class="hud-tl">BELLMONT MUNICIPAL CCTV — MIRROR ACCESS<br><span id="wall-count">FEEDS ONLINE —</span></p>
+        <p class="hud-tr"><span data-clock="85268">23:41:08</span><br>2024.03.11</p>
+        <button class="hud-alert" id="wall-alert" type="button" hidden>SYSTEM: POSSIBLE MATCH — CAM 03 <u>VIEW</u></button>
+        <p class="hud-hint">HOVER TO READ METADATA / CLICK A FEED TO ENLARGE / DRAG TO LOOK AROUND</p>
+        <p class="note hand note-wall">Who disabled Camera 04?</p>
+        <!-- the task: always on screen -->
+        <p class="hud-target" id="hud-target">FIND CAMERA 04<br><span id="hud-checked">FEEDS CHECKED 00</span></p>
+
+      </div>
+    </section>
+
+
+    <!-- ==========================================================
+         03 — SUBJECT TRACKING
+         ========================================================== -->
+    <section class="stage stage-track" id="track" aria-label="Subject tracking">
+      <div class="track-grid">
+        <!-- VIGILANTE TRACKING IMAGE / REPLACE WITH CCTV FOOTAGE (CAM 03) -->
+        <div class="feed-slot" id="track-feed"></div>
+        <aside class="track-side">
+          <h2 class="sys-h"># SUBJECT TRACKING</h2>
+          <div class="data" id="track-data"></div>
+          <h3 class="sys-h3">## FRAME MARKERS</h3>
+          <div class="frames" id="track-frames"></div>
+        </aside>
+      </div>
+      <p class="note hand note-track">left side stiff —<br>same as the Morrow St. videos</p>
+    </section>
+
+
+    <!-- ==========================================================
+         04 — CAMERA HANDOFF
+         ========================================================== -->
+    <section class="stage stage-handoff" id="handoff" aria-label="Camera handoff">
+      <div class="ho-grid">
+        <ol class="ho-path" id="ho-path">
+          <li data-cam="CAM 03">CAM 03</li><li data-cam="CAM 08">CAM 08</li><li data-cam="CAM 14">CAM 14</li><li data-cam="CAM 21">CAM 21</li>
+        </ol>
+        <div class="ho-strip" id="ho-strip"></div>
+        <div class="ho-main">
+          <div class="feed-slot" id="ho-feed"></div>        </div>
+        <ol class="ho-log" id="ho-log" aria-live="polite"></ol>
+      </div>
+      <p class="note hand note-handoff">81% sure.<br>Wrong man.</p>
+    </section>
+
+
+    <!-- ==========================================================
+         05 — MORROW STREET ARCHIVE / CAMERA 04
+         ========================================================== -->
+    <section class="stage stage-morrow" id="morrow" aria-label="Morrow Street archive">
+      <div class="m-grid">
+        <header class="m-head">
+          <p># ARCHIVE / CAMERA 04 / MORROW STREET</p>
+          <p><span class="k">**SOURCE:**</span> CASE FILE 001 — EVIDENCE 03 &nbsp; <span class="k">**DATE:**</span> 2023.10.02 &nbsp; <span class="k">**VICTIM:**</span> ELIAS VANE, 54</p>
+        </header>
+
+        <div class="m-left">
+          <!-- ISSUE 01 CAMERA 04 IMAGE / REPLACE WITH ARCHIVE FOOTAGE (scene: 'morrow' in script.js) -->
+          <div class="feed-slot" id="m-feed">
+            <div class="m-lost" id="m-lost" hidden>
+              <p class="m-lost-big">SIGNAL LOST</p>
+              <p id="m-lost-count">00:00 / 05:00</p>
+              <p class="m-lost-live" id="m-lost-live" hidden>RECORDING: OFF<br>LIVE OUTPUT: <b>ON</b><br>VIEWERS: 1</p>
+            </div>
+          </div>
+
+          <div class="tl">
+            <div class="tl-bar" id="tl-bar">
+              <div class="tl-gap" style="left:40%;width:33.333%"><span>SIGNAL LOST</span></div>
+              <!-- markers / minute ticks are added by script.js -->
+              <input class="tl-range" id="tl" type="range" min="0" max="900" step="1" value="0" aria-label="Scrub Camera 04 timeline">
+            </div>
+            <div class="tl-controls">
+              <button class="btn" id="tl-play" type="button">▶ PLAY</button>
+              <span class="tl-time" id="m-time">00:05:00</span>
+              <span class="dim">DRAG TO SCRUB / CLICK A MARKER</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="m-meta">
+          <dl class="data">
+            <dt>EVENT</dt><dd id="m-event">—</dd>
+            <dt>INTERRUPTION</dt><dd>00:11:00 — 00:16:00</dd>
+            <dt>CAUSE</dt><dd><span id="m-cause">TECHNICAL FAILURE</span> <span id="m-cause-new" hidden>[ UNRESOLVED ]</span></dd>
+          </dl>
+          <button class="btn btn-wide" id="m-inspect" type="button">[ INSPECT METADATA ]</button>
+          <div class="m-out" id="m-out"></div>
+          <p class="note hand note-morrow">Recording stopped.<br>The camera didn't.</p>
+        </aside>
+      </div>
+    </section>
+
+
+    <!-- ==========================================================
+         06 — ACCESS LOG (classified document)
+         ========================================================== -->
+    <section class="stage stage-log" id="log" aria-label="Access log">
+      <!-- THE DOCUMENT — a scanned, redacted file (replace assets/images/docs/fbi-file.jpg).
+           The black marker bars are buttons: their positions are in `spots` (script.js, stage 06), in % of the image. -->
+      <figure class="doc-scan" id="log-doc">
+        <img src="assets/images/docs/fbi-file.jpg" alt="Scanned confidential file, heavily redacted">
+      </figure>
+      <p class="doc-scan-hint">CLICK THE REDACTIONS</p>
+
+      <!-- REMOTE ACCESS REVEAL (major turning point) -->
+      <aside class="reveal-card" id="log-reveal" hidden></aside>
+    </section>
+
+
+    <!-- ==========================================================
+         07 — HIDDEN NETWORK
+         ========================================================== -->
+    <section class="stage stage-network" id="network" aria-label="Hidden network">
+      <div class="net-grid">
+        <div class="net-stats" id="net-stats">
+          <p><b data-count="428">0</b>REGISTERED CITY CAMERAS</p>
+          <p><b data-count="37">0</b>UNREGISTERED NODES</p>
+          <p><b data-count="12">0</b>UNKNOWN RELAY POINTS</p>
+          <p><b data-count="4">0</b>ACTIVE OBSERVERS</p>
+        </div>
+        <figure class="net-map">
+          <!-- HIDDEN NETWORK MAP — generated in script.js (buildCity / drawCity).
+               To use a scanned map instead, put an <img> here behind the svg. -->
+          <svg id="net-map" viewBox="0 0 1000 620" role="img" aria-label="Map of camera network across Bellmont"></svg>
+          <figcaption class="net-layers">
+            <button class="btn is-on" data-layer="reg" type="button">CITY NETWORK</button>
+            <button class="btn is-on" data-layer="unreg" type="button">UNREGISTERED</button>
+            <button class="btn is-on" data-layer="relay" type="button">RELAYS</button>
+            <button class="btn" data-layer="sub" type="button">SUBSURFACE</button>
+          </figcaption>
+        </figure>
+        <aside class="net-panel" id="net-panel">
+          <p class="dim">SELECT AN UNLABELED NODE ◇ OR RELAY △</p>
+        </aside>
+        <div class="net-outcomes">
+          <p class="sys-h3">## OUTCOMES ATTRIBUTED TO NETWORK W-13</p>
+          <ul>
+            <li>MISSING PERSONS LOCATED <b>31</b></li>
+            <li>VIOLENT CRIMES PREVENTED <b>112 (EST.)</b></li>
+            <li>CIVILIANS INDEXED <b>1,204,388</b></li>
+            <li>CONSENT RECORDS <b>0</b></li>
+          </ul>
+        </div>
+      </div>
+      <p class="note hand note-network">428 they admit to.</p>
+    </section>
+
+
+    <!-- ==========================================================
+         08 — OTHER SUBJECTS
+         ========================================================== -->
+    <section class="stage stage-subjects" id="subjects" aria-label="Other subjects">
+      <header class="sub-head">
+        <p># INDEX / ACTIVE SUBJECT FILES</p>
+        <p class="dim">FILTER: ENHANCED / MASKED / OF INTEREST — 6 OF 2,331 SHOWN</p>
+      </header>
+      <!-- Subject portraits are generated placeholders. Replace via SUBJECTS[n].img in script.js -->
+      <div class="subj-grid" id="subj-grid"></div>
+      <p class="note hand note-subjects">019 was nine years old.</p>
+    </section>
+
+
+    <!-- ==========================================================
+         10 — WHO OWNS THE NETWORK?
+         ========================================================== -->
+    <section class="stage stage-owner" id="owner" aria-label="Who owns the network">
+      <div class="own-panel">
+        <!-- IDENTITY CHECK — print card (replace assets/images/docs/fingerprints.jpg) -->
+        <figure class="own-print" id="own-print">
+          <img src="assets/images/docs/fingerprints.jpg" alt="Fingerprint and palm print card">
+          <figcaption>PRINT CARD — W-13 / USER 01 — <span class="redact">██████████</span></figcaption>
+        </figure>
+        <div class="own-out" id="own-out"></div>
+        <dl class="data own-fields" id="own-fields"></dl>
+        <button class="btn btn-wide" id="own-request" type="button" hidden>[ REQUEST IDENTITIES — 17 ]</button>
+        <div class="own-users" id="own-users"></div>
+      </div>
+      <div class="own-pops" id="own-pops"></div>
+      <p class="own-alert" id="own-alert" hidden></p>
+    </section>
+
+
+    <!-- ==========================================================
+         11 — REVERSAL (no webcam / mic / location is ever used —
+         the "observer" image is a generated scene)
+         ========================================================== -->
+    <section class="stage stage-reversal" id="reversal" aria-label="Reversal">
+      <div class="feed-slot" id="rev-feed"></div>
+      <div class="rev-trail" id="rev-trail"><svg id="rev-trail-svg"></svg></div>
+      <p class="rev-msg" id="rev-msg"></p>
+      <aside class="rev-data data" id="rev-data"></aside>
+    </section>
+
+
+    <!-- ==========================================================
+         12 — ENDING
+         ========================================================== -->
+    <section class="stage stage-ending" id="ending" aria-label="Ending">
+      <div class="end-screen">
+        <div class="end-lines" id="end-lines" aria-live="polite"></div>
+        <div class="end-final" id="end-final" hidden></div>
+      </div>
+      <div class="end-off">
+        <p>SIGNAL TERMINATED</p>
+        <button class="btn" id="end-reconnect" type="button" hidden>[ RECONNECT ]</button>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- PROCEED (label changes per stage; ENTER also works) -->
+  <button class="proceed" id="proceed" type="button" hidden>PROCEED →</button>
+
+  <!-- EXPANDED FEED VIEWER (opened by clicking a feed on the wall) -->
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Expanded feed" hidden>
+    <div class="viewer-frame">
+      <div class="feed-slot viewer-media" id="viewer-media"></div>
+      <aside class="viewer-meta" id="viewer-meta"></aside>
+    </div>
+    <nav class="viewer-nav">
+      <button class="btn" id="viewer-prev" type="button">← PREV</button>
+      <button class="btn" id="viewer-next" type="button">NEXT →</button>
+      <button class="btn" id="viewer-close" type="button">CLOSE [ESC]</button>
+    </nav>
+  </div>
+
+  <!-- the end: you switch it off -->
+  <div class="power-off" id="power-off" hidden>
+    <!-- the terminal: what you did tonight, typed back to you (Found.terminal in script.js) -->
+    <pre class="term" id="term" aria-live="polite"></pre>
+  </div>
+
+  <!-- HOVER METADATA -->
+  <div class="meta-tip" id="tip" hidden></div>
+
+  <script src="script.js"></script>
+  <!-- 360° CCTV room (Three.js). Needs a local server (VS Code Live Server etc.);
+       opened as file:// it can't load, and the flat wall is shown instead. -->
+  <script type="module" src="room3d.js"></script>
+</body>
+</html>

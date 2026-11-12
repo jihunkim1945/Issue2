@@ -1,0 +1,7 @@
+# local tools / big files — not part of the site
+tools/.yolo/
+tools/models/
+*.pt
+_backup/
+.claude/
+.DS_Store
